@@ -6,15 +6,30 @@ using UnityEngine.UI;
 
 public class GetInputGiveOutPut : MonoBehaviour
 {
-    public InputField Down_Payment;
-    public InputField House_Price;
-    public InputField Interest_Rate;
-    public Dropdown Amortization_Period_Drop;
-    public Dropdown Payment_Frequency_Drop;
+    /// <summary>
+    /// need to add amo period over 25 years
+    /// when over 25 years mortgage insurance isnt available so the 
+    /// person needs to have 20% downpayment to get a mortgage
+    /// 
+    /// Also need to look at how mortgage insurance is calculated into
+    /// the total cost. Appears as if the value isn't charged any interest
+    /// over the life of the loan.
+    /// 
+    /// Also add weekly and accelerated weekly options for payment
+    /// frequency
+    /// </summary>
+    public InputField DownPayment;
+    public InputField HousePrice;
+    public InputField InterestRate;
+    public Dropdown AmortizationPeriodDrop;
+    public Dropdown PaymentFrequencyDrop;
     public Text Mortgage_Payment;
-    public Text Number_of_Payments;
-    public Text Interest_Payments;
-    public Text Total_Cost;
+    public Text NumberOfPayments;
+    public Text InterestPayments;
+    public Text TotalCost;
+    public Text DownPaymentWarning;
+    public Text MortgageInsurance;
+    public Text MortgageInsuranceLabel;
 
 
     public void setget()
@@ -29,16 +44,77 @@ public class GetInputGiveOutPut : MonoBehaviour
     public void MortgagePayment()
     {
         //M = P [ i(1 + i)^n ] / [ (1 + i)^n – 1]
+        //Down Payment (% of Home Price)
+        //5 % -9.99 % 10 % -14.99 % 15 % -19.99 %
+        //4.00%	         3.10%	       2.80%	
+
+        double dPayment = double.Parse(DownPayment.text);
+        double hPrice = double.Parse(HousePrice.text);
+        double iRate = double.Parse(InterestRate.text);
+        double minDPayment = hPrice * 0.05f;
 
         double amo;
 
-        amo = Amortization_Period_Drop.value * 5 + 5;
+        amo = AmortizationPeriodDrop.value * 5 + 5;
         double n = amo * 12f;
 
         double m;
-        double i = double.Parse(Interest_Rate.text)/100f/12f;
-        double p = double.Parse(House_Price.text) - double.Parse(Down_Payment.text);
+        double i = iRate/100f/12f;
+        double p = hPrice - dPayment;
         double interest1 = Math.Pow(i + 1, n);
+        double insuranceCost = 0;
+
+        double ratio = dPayment / hPrice * 1f;
+        if (ratio < .2)
+        {
+            MortgageInsurance.gameObject.SetActive(true);
+            MortgageInsuranceLabel.gameObject.SetActive(true);
+            if (ratio < .05)
+            {
+                DownPaymentWarning.gameObject.SetActive(true);
+            }
+            else
+            {
+                DownPaymentWarning.gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            MortgageInsurance.gameObject.SetActive(false);
+            MortgageInsuranceLabel.gameObject.SetActive(false);
+        }
+
+        //if downpayment is less than 5 % then give a warning and assume 5 %
+        if (ratio < .05)
+        {
+            DownPaymentWarning.text = $"Minimum downpayment for the your house is ${minDPayment.ToString("F2")} (5% of house price), " +
+                $"this value has been used for the calculations.";
+            p = hPrice - minDPayment;
+            insuranceCost = p * 0.04f;
+            MortgageInsurance.text = insuranceCost.ToString("F2");
+        }
+        else if (ratio >= 0.05 && ratio <= 0.0999)
+        {
+            insuranceCost = p * 0.04f;
+            p += insuranceCost;
+            MortgageInsurance.text = insuranceCost.ToString("F2");
+
+        }
+        else if (ratio >= 0.10 && ratio <= 0.15)
+        {
+            insuranceCost = p * 0.031f;
+            p += insuranceCost;
+            MortgageInsurance.text = insuranceCost.ToString("F2");
+
+        }
+        else if (ratio >= 0.15 && ratio < 0.2)
+        {
+            insuranceCost = p * 0.028f;
+            p += insuranceCost;
+            MortgageInsurance.text = insuranceCost.ToString("F2");
+
+        }
+
 
 
 
@@ -50,7 +126,7 @@ public class GetInputGiveOutPut : MonoBehaviour
         double payments = 0;
         double paymentYears = 0;
 
-        if (Payment_Frequency_Drop.value == 0)
+        if (PaymentFrequencyDrop.value == 0)
         {
             iPay = (p*i);
             ttlInterest += iPay;
@@ -66,7 +142,7 @@ public class GetInputGiveOutPut : MonoBehaviour
             paymentYears = payments / 12f;
 
         }
-        else if (Payment_Frequency_Drop.value == 1)
+        else if (PaymentFrequencyDrop.value == 1)
         {
             m = m * 12 / 26;
             iPay = p*(i*12/26f);
@@ -82,7 +158,7 @@ public class GetInputGiveOutPut : MonoBehaviour
             }
             paymentYears = payments / 26f;
         }
-        else if (Payment_Frequency_Drop.value == 2)
+        else if (PaymentFrequencyDrop.value == 2)
         {
             m /= 2;
             iPay = p * (i * 12 / 26f);
@@ -98,11 +174,11 @@ public class GetInputGiveOutPut : MonoBehaviour
             }
             paymentYears = payments / 26f;
         }
-        double ttlcost = p + ttlInterest;
-        Mortgage_Payment.text = m.ToString("F2");
-        Number_of_Payments.text = payments.ToString() + " (" + paymentYears.ToString("F2") + " Years)";
-        Interest_Payments.text = ttlInterest.ToString("F2");
-        Total_Cost.text = ttlcost.ToString("F2");
+        double ttlcost = p + ttlInterest + insuranceCost;
+        Mortgage_Payment.text = "$" + m.ToString("F2");
+        NumberOfPayments.text = "$" + payments.ToString() + " (" + paymentYears.ToString("F2") + " Years)";
+        InterestPayments.text = "$" + ttlInterest.ToString("F2");
+        TotalCost.text = "$" + ttlcost.ToString("F2");
 
 
 
