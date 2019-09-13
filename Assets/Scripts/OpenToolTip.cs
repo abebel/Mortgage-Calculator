@@ -6,18 +6,15 @@ using UnityEngine.UI;
 public class OpenToolTip : MonoBehaviour
 {
     public Text ToolTip;
-    //public Button ToolTipClose;
 
-    public void Open()
+    private void Open()
     {
         ToolTip.gameObject.SetActive(true);
-        //ToolTipClose.gameObject.SetActive(true);
     }
 
-    public void Close()
+    private void Close()
     {
         ToolTip.gameObject.SetActive(false);
-        //ToolTipClose.gameObject.SetActive(false);
     }
 
     public void OpenCose()
