@@ -30,8 +30,22 @@ public class GetInputGiveOutPut : MonoBehaviour
     public Text DownPaymentWarning;
     public Text MortgageInsurance;
     public Text MortgageInsuranceLabel;
+    public Text NoInputWarning;
+    public Button MortgageInsuranceTooltipButton;
 
 
+    public void EmptyInputWarning()
+    {
+        if (DownPayment.text == "" || HousePrice.text == "" || InterestRate.text == "")
+        {
+            NoInputWarning.gameObject.SetActive(true);
+            NoInputWarning.text = "Please fill in all fields.";
+        }
+        else
+        {
+            NoInputWarning.gameObject.SetActive(false);
+        }
+    }
     private void Calc(double monthlyMortgage, double Principle, double InterestRate, out double TotalInterestPaid, out double PaymentsMade)
     {
         TotalInterestPaid = 0;
@@ -53,6 +67,7 @@ public class GetInputGiveOutPut : MonoBehaviour
         {
             MortgageInsurance.gameObject.SetActive(true);
             MortgageInsuranceLabel.gameObject.SetActive(true);
+            MortgageInsuranceTooltipButton.gameObject.SetActive(true);
             if (dPayment / hPrice < .05)
             {
                 DownPaymentWarning.gameObject.SetActive(true);
@@ -66,6 +81,7 @@ public class GetInputGiveOutPut : MonoBehaviour
         {
             MortgageInsurance.gameObject.SetActive(false);
             MortgageInsuranceLabel.gameObject.SetActive(false);
+            MortgageInsuranceTooltipButton.gameObject.SetActive(false);
         }
     }
     public double MortgageIns(double p)
@@ -79,29 +95,34 @@ public class GetInputGiveOutPut : MonoBehaviour
 
         if (ratio < .05)
         {
-            DownPaymentWarning.text = $"Minimum downpayment for the your house is ${minDPayment.ToString("F2")} (5% of house price), " +
+            DownPaymentWarning.text = $"Minimum downpayment for your house is ${String.Format("{0:N}",minDPayment)} (5% of house price), " +
                 $"this value has been used for the calculations.";
             p = hPrice - minDPayment;
             insuranceCost = p * 0.04f;
-            MortgageInsurance.text = insuranceCost.ToString("F2");
+            p += insuranceCost;
+            //MortgageInsurance.text = insuranceCost.ToString("F2");
+            MortgageInsurance.text = string.Format("$ {0:N}",insuranceCost);
         }
         else if (ratio >= 0.05 && ratio <= 0.0999)
         {
             insuranceCost = p * 0.04f;
             p += insuranceCost;
-            MortgageInsurance.text = insuranceCost.ToString("F2");
+            //MortgageInsurance.text = insuranceCost.ToString("F2");
+            MortgageInsurance.text = string.Format("$ {0:N}", insuranceCost);
         }
         else if (ratio >= 0.10 && ratio <= 0.15)
         {
             insuranceCost = p * 0.031f;
             p += insuranceCost;
-            MortgageInsurance.text = insuranceCost.ToString("F2");
+            //MortgageInsurance.text = insuranceCost.ToString("F2");
+            MortgageInsurance.text = string.Format("$ {0:N}", insuranceCost);
         }
         else if (ratio >= 0.15 && ratio < 0.2)
         {
             insuranceCost = p * 0.028f;
             p += insuranceCost;
-            MortgageInsurance.text = insuranceCost.ToString("F2");
+            //MortgageInsurance.text = insuranceCost.ToString("F2");
+            MortgageInsurance.text = string.Format("$ {0:N}", insuranceCost);
         }
         return p;
     }
@@ -115,10 +136,13 @@ public class GetInputGiveOutPut : MonoBehaviour
         //
         // limit only to mortgage payments
         //
+
+
         double dPayment = double.Parse(DownPayment.text);
         double hPrice = double.Parse(HousePrice.text);
         double iRate = double.Parse(InterestRate.text);
         double minDPayment = hPrice * 0.05f;
+        
 
         double Amortization;
 
@@ -127,6 +151,10 @@ public class GetInputGiveOutPut : MonoBehaviour
 
         double fPayment;
         double i = iRate / 100f / 12f;
+        if (i == 0)
+        {
+            i = 0.0000000000001f;
+        }
         double p = hPrice - dPayment;
         double interest1 = Math.Pow(i + 1, n);
 
@@ -162,10 +190,14 @@ public class GetInputGiveOutPut : MonoBehaviour
 
 
         double ttlcost = p + TotalInterestPaid;
-        Mortgage_Payment.text = "$" + fPayment.ToString("F2");
-        NumberOfPayments.text = NumberOfPaymentsMade.ToString() + " (" + YearsOfPayments.ToString("F2") + " Years)";
-        InterestPayments.text = "$" + TotalInterestPaid.ToString("F2");
-        TotalCost.text = "$" + ttlcost.ToString("F2");
+        //Mortgage_Payment.text = "$" + fPayment.ToString("F2");
+        Mortgage_Payment.text = string.Format("$ {0:N}", fPayment);
+        //NumberOfPayments.text = NumberOfPaymentsMade.ToString() + " (" + YearsOfPayments.ToString("F2") + " Years)";
+        NumberOfPayments.text = string.Format("{0:N0} ({1:N0} Years)", NumberOfPaymentsMade,YearsOfPayments);
+        //InterestPayments.text = "$" + TotalInterestPaid.ToString("F2");
+        InterestPayments.text = string.Format("$ {0:N}", TotalInterestPaid);
+        //TotalCost.text = "$" + ttlcost.ToString("F2");
+        TotalCost.text = string.Format("$ {0:N}", ttlcost);
     }
 
 }
